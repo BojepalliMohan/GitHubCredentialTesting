@@ -2,6 +2,8 @@ package pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.TimeoutError;
+import com.microsoft.playwright.options.WaitUntilState;
 import com.tavant.githubcredentialtesting.config.AgentSettings;
 import constants.FrameworkConstants;
 import utils.ConfigReader;
@@ -17,18 +19,38 @@ public final class LoginPage {
     }
 
     public void open() {
-        page.navigate(EnvironmentManager.getSettings().targetUrl());
+        page.navigate(
+            EnvironmentManager.getSettings().targetUrl(),
+            new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
     }
 
     public void loginWithConfiguredCredentials() {
         AgentSettings settings = EnvironmentManager.getSettings();
+        String usernameSelector = ConfigReader.require(FrameworkConstants.LOGIN_USERNAME_SELECTOR_PROPERTY);
+        String passwordSelector = ConfigReader.require(FrameworkConstants.LOGIN_PASSWORD_SELECTOR_PROPERTY);
+        String submitSelector = ConfigReader.require(FrameworkConstants.LOGIN_SUBMIT_SELECTOR_PROPERTY);
+        int timeoutMs = ConfigReader.getInt(
+            FrameworkConstants.ASSERTION_TIMEOUT_PROPERTY,
+            FrameworkConstants.DEFAULT_ASSERTION_TIMEOUT_MS);
 
-        page.locator(ConfigReader.require(FrameworkConstants.LOGIN_USERNAME_SELECTOR_PROPERTY))
-                .fill(settings.username());
-        page.locator(ConfigReader.require(FrameworkConstants.LOGIN_PASSWORD_SELECTOR_PROPERTY))
-                .fill(settings.password());
-        page.locator(ConfigReader.require(FrameworkConstants.LOGIN_SUBMIT_SELECTOR_PROPERTY))
-                .click();
+        Locator username = page.locator(usernameSelector).first();
+        Locator password = page.locator(passwordSelector).first();
+
+        try {
+            username.waitFor(new Locator.WaitForOptions().setTimeout((double) timeoutMs));
+            password.waitFor(new Locator.WaitForOptions().setTimeout((double) timeoutMs));
+
+            username.fill(settings.username());
+            password.fill(settings.password());
+            page.locator(submitSelector).first().click();
+        } catch (TimeoutError exception) {
+            throw new AssertionError(
+                "Login form was not found. URL: " + page.url()
+                    + ", username selector: " + usernameSelector
+                    + ", password selector: " + passwordSelector
+                    + ", submit selector: " + submitSelector,
+                exception);
+        }
     }
 
     public void assertLoginSucceeded() {
