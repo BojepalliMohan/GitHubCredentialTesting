@@ -22,13 +22,13 @@ if (-not $hasPrimaryEnvSettings -and -not $hasFallbackEnvSettings -and -not (Tes
 Push-Location $projectRoot
 try {
     if (-not $SkipBrowserInstall) {
-        mvn -q "-DskipTests" exec:java "-Dexec.mainClass=com.microsoft.playwright.CLI" "-Dexec.args=install chromium"
+        & mvn '-q' '-DskipTests' 'exec:java' '-Dexec.mainClass=com.microsoft.playwright.CLI' '-Dexec.args=install chromium'
         if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
         }
     }
 
-    mvn -q "-DagentConfig=$resolvedConfigPath" verify
+    & mvn '-q' "-DagentConfig=$resolvedConfigPath" 'verify'
     exit $LASTEXITCODE
 } finally {
     Pop-Location
