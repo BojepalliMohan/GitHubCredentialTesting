@@ -1,5 +1,6 @@
 param(
-    [string]$ConfigPath = "config/agent.properties"
+    [string]$ConfigPath = "config/agent.properties",
+    [switch]$SkipBrowserInstall
 )
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -10,16 +11,25 @@ if ([System.IO.Path]::IsPathRooted($ConfigPath)) {
     $resolvedConfigPath = Join-Path $projectRoot $ConfigPath
 }
 
-$hasEnvSettings = $env:AGENT_USERNAME -and $env:AGENT_PASSWORD -and $env:TARGET_URL
+$hasPrimaryEnvSettings = $env:AGENT_USERNAME -and $env:AGENT_PASSWORD -and $env:TARGET_URL
+$hasFallbackEnvSettings = $env:USERNAME -and $env:PASSWORD -and $env:URL
 
-if (-not $hasEnvSettings -and -not (Test-Path $resolvedConfigPath)) {
-    Write-Error "Create $resolvedConfigPath from config/agent.properties.example or set AGENT_USERNAME, AGENT_PASSWORD, and TARGET_URL."
+if (-not $hasPrimaryEnvSettings -and -not $hasFallbackEnvSettings -and -not (Test-Path $resolvedConfigPath)) {
+    Write-Error "Create $resolvedConfigPath from config/agent.properties.example or set AGENT_USERNAME, AGENT_PASSWORD, TARGET_URL or USERNAME, PASSWORD, URL."
     exit 1
 }
 
 Push-Location $projectRoot
 try {
-    mvn -q compile exec:java "-DagentConfig=$resolvedConfigPath"
+    if (-not $SkipBrowserInstall) {
+        mvn -q "-DskipTests" exec:java "-Dexec.mainClass=com.microsoft.playwright.CLI" "-Dexec.args=install chromium"
+        if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+        }
+    }
+
+    mvn -q "-DagentConfig=$resolvedConfigPath" verify
+    exit $LASTEXITCODE
 } finally {
     Pop-Location
 }

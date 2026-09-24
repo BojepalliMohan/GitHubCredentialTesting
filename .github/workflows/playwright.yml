@@ -1,0 +1,45 @@
+name: Playwright UI Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      github_environment:
+        description: GitHub environment that contains USERNAME, URL, and PASSWORD
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  login-tests:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.github_environment }}
+    env:
+      USERNAME: ${{ vars.USERNAME || secrets.USERNAME }}
+      PASSWORD: ${{ secrets.PASSWORD || vars.PASSWORD }}
+      URL: ${{ vars.URL || secrets.URL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Verify injected environment values
+        shell: bash
+        run: |
+          test -n "$USERNAME" || { echo "USERNAME is missing"; exit 1; }
+          test -n "$PASSWORD" || { echo "PASSWORD is missing"; exit 1; }
+          test -n "$URL" || { echo "URL is missing"; exit 1; }
+          echo "Injected values detected for USERNAME, PASSWORD, and URL."
+
+      - name: Install Playwright browser
+        run: mvn -q -DskipTests exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+
+      - name: Run login suite
+        run: mvn -q -DagentConfig=missing.properties verify
