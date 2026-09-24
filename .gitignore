@@ -1,0 +1,5 @@
+/target/
+/config/agent.properties
+/.idea/
+/.vscode/
+*.log

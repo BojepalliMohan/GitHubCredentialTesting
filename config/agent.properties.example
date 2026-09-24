@@ -1,0 +1,3 @@
+agent.username=your-github-username
+agent.password=your-token-or-password
+target.url=https://api.github.com/user
