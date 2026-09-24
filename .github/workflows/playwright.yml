@@ -79,7 +79,7 @@ jobs:
           echo "Environment loaded successfully"
 
       - name: Install Playwright browser
-        run: mvn -q -DskipTests exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+        run: mvn -q -DskipTests -Dexec.classpathScope=test exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
 
       - name: Run login suite
         run: mvn -q -DagentConfig=missing.properties verify

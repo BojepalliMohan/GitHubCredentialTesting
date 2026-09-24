@@ -22,7 +22,7 @@ if (-not $hasPrimaryEnvSettings -and -not $hasFallbackEnvSettings -and -not (Tes
 Push-Location $projectRoot
 try {
     if (-not $SkipBrowserInstall) {
-        & mvn '-q' '-DskipTests' 'exec:java' '-Dexec.mainClass=com.microsoft.playwright.CLI' '-Dexec.args=install chromium'
+        & mvn '-q' '-DskipTests' '-Dexec.classpathScope=test' 'exec:java' '-Dexec.mainClass=com.microsoft.playwright.CLI' '-Dexec.args=install chromium'
         if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
         }

@@ -96,6 +96,9 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.1</version>
+                <configuration>
+                    <classpathScope>test</classpathScope>
+                </configuration>
             </plugin>
         </plugins>
     </build>
