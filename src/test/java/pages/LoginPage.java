@@ -60,19 +60,22 @@ public final class LoginPage {
         String successSelector = ConfigReader.get(FrameworkConstants.LOGIN_SUCCESS_SELECTOR_PROPERTY);
         String expectedUrlFragment = ConfigReader.get(FrameworkConstants.POST_LOGIN_URL_CONTAINS_PROPERTY);
 
-        if (expectedUrlFragment == null && successSelector == null) {
-            throw new IllegalStateException(
-                    "Configure either post.login.url.contains or login.success.selector in src/test/resources/config.properties.");
-        }
-
         if (expectedUrlFragment != null) {
             waitForUrl(expectedUrlFragment, timeoutMs);
         }
 
-        if (successSelector != null) {
-            Locator successLocator = page.locator(successSelector).first();
-            successLocator.waitFor(new Locator.WaitForOptions().setTimeout((double) timeoutMs));
-        }
+        Locator successLocator = successSelector != null
+                ? page.locator(successSelector).first()
+                : logoutButton();
+        successLocator.waitFor(new Locator.WaitForOptions().setTimeout((double) timeoutMs));
+    }
+
+    private Locator logoutButton() {
+        return page.locator("//a[@href='javascript:logoutAndReleaseLock()']"
+                + " | //a[@href='/saml/logout?local=true']"
+                + " | //a[contains(normalize-space(), 'Logout')]"
+                + " | //a[contains(normalize-space(), 'Cerrar sesión')]"
+                + " | //td[contains(normalize-space(), 'Welcome')]").first();
     }
 
     private void waitForUrl(String expectedUrlFragment, int timeoutMs) {
