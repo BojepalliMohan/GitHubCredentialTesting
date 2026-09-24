@@ -6,7 +6,7 @@ on:
       github_environment:
         description: GitHub environment that contains USERNAME, URL, and PASSWORD
         required: true
-        type: string
+        type: environment
 
 permissions:
   contents: read
@@ -30,6 +30,7 @@ jobs:
       - name: Resolve environment values
         shell: bash
         env:
+          SELECTED_ENVIRONMENT: ${{ inputs.github_environment }}
           VAR_URL: ${{ vars.URL }}
           SECRET_URL: ${{ secrets.URL }}
           VAR_USERNAME: ${{ vars.USERNAME }}
@@ -37,6 +38,8 @@ jobs:
           VAR_PASSWORD: ${{ vars.PASSWORD }}
           SECRET_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
+          echo "Selected environment: $SELECTED_ENVIRONMENT"
+
           resolve_value() {
             local key="$1"
             local variable_value="$2"
