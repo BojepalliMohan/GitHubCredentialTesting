@@ -17,11 +17,6 @@ jobs:
 
     environment: ${{ inputs.github_environment }}
 
-    env:
-      URL: ${{ vars.URL != '' && vars.URL || secrets.URL }}
-      USERNAME: ${{ vars.USERNAME != '' && vars.USERNAME || secrets.USERNAME }}
-      PASSWORD: ${{ secrets.PASSWORD != '' && secrets.PASSWORD || vars.PASSWORD }}
-
     steps:
       - uses: actions/checkout@v4
 
@@ -32,6 +27,46 @@ jobs:
           java-version: '21'
           cache: maven
 
+      - name: Resolve environment values
+        shell: bash
+        env:
+          VAR_URL: ${{ vars.URL }}
+          SECRET_URL: ${{ secrets.URL }}
+          VAR_USERNAME: ${{ vars.USERNAME }}
+          SECRET_USERNAME: ${{ secrets.USERNAME }}
+          VAR_PASSWORD: ${{ vars.PASSWORD }}
+          SECRET_PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          resolve_value() {
+            local key="$1"
+            local variable_value="$2"
+            local secret_value="$3"
+            local selected_value=""
+            local source=""
+
+            if [ -n "$variable_value" ]; then
+              selected_value="$variable_value"
+              source="vars"
+            elif [ -n "$secret_value" ]; then
+              selected_value="$secret_value"
+              source="secrets"
+            else
+              echo "$key missing in both vars and secrets"
+              exit 1
+            fi
+
+            {
+              printf '%s<<EOF\n' "$key"
+              printf '%s\n' "$selected_value"
+              printf 'EOF\n'
+              printf '%s_SOURCE=%s\n' "$key" "$source"
+            } >> "$GITHUB_ENV"
+          }
+
+          resolve_value URL "$VAR_URL" "$SECRET_URL"
+          resolve_value USERNAME "$VAR_USERNAME" "$SECRET_USERNAME"
+          resolve_value PASSWORD "$VAR_PASSWORD" "$SECRET_PASSWORD"
+
       - name: Verify injected environment values
         shell: bash
         run: |
@@ -40,6 +75,9 @@ jobs:
           test -n "$USERNAME" || { echo "USERNAME missing"; exit 1; }
           test -n "$PASSWORD" || { echo "PASSWORD missing"; exit 1; }
 
+          echo "URL source: $URL_SOURCE"
+          echo "USERNAME source: $USERNAME_SOURCE"
+          echo "PASSWORD source: $PASSWORD_SOURCE"
           echo "Environment loaded successfully"
 
       - name: Install Playwright browser
