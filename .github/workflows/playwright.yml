@@ -2,11 +2,6 @@ name: Playwright UI Tests
 
 on:
   workflow_dispatch:
-    inputs:
-      github_environment:
-        description: GitHub environment that contains USERNAME, URL, and PASSWORD
-        required: true
-        type: environment
 
 permissions:
   contents: read
@@ -15,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    environment: ${{ inputs.github_environment }}
+    environment: QA
 
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +25,7 @@ jobs:
       - name: Resolve environment values
         shell: bash
         env:
-          SELECTED_ENVIRONMENT: ${{ inputs.github_environment }}
+          SELECTED_ENVIRONMENT: QA
           VAR_URL: ${{ vars.URL }}
           SECRET_URL: ${{ secrets.URL }}
           VAR_USERNAME: ${{ vars.USERNAME }}
